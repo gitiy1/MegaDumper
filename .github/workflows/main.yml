@@ -34,10 +34,12 @@ jobs:
     - name: 编译项目 (Build)
       run: dotnet build MegaDumper/MegaDumper.csproj --configuration ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-restore
 
-    # 可选：如果想在每次编译后下载编译好的文件，可以添加上传产物(Upload Artifact)的步骤
+    - name: 发布单文件独立程序 (Publish Single File)
+      run: dotnet publish MegaDumper/MegaDumper.csproj -c ${{ matrix.configuration }} -r win-${{ matrix.platform }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
     - name: 上传构建产物 (Upload build artifacts)
       uses: actions/upload-artifact@v4
       with:
-        name: MegaDumper-${{ matrix.platform }}-${{ matrix.configuration }}
-        # 根据实际编译输出路径调整，通常在 bin/Release/net8.0-windows/ 下
-        path: MegaDumper/bin/${{ matrix.configuration }}/net8.0-windows/
+        name: MegaDumper-SingleFile-${{ matrix.platform }}-${{ matrix.configuration }}
+        # publish 的输出路径和 build 不同，它在对应的 publish 文件夹下
+        path: MegaDumper/bin/${{ matrix.platform }}/${{ matrix.configuration }}/net8.0-windows/win-${{ matrix.platform }}/publish/
