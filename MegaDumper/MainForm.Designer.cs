@@ -50,6 +50,8 @@ namespace Mega_Dumper
             this.gotoLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.advancedInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.siglusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.dumpScenePckToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.virtualMemoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewHeapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.enumAppdomainsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -148,6 +150,7 @@ namespace Mega_Dumper
             this.gotoLocationToolStripMenuItem,
             this.copyToolStripMenuItem,
             this.advancedInfoToolStripMenuItem,
+            this.siglusToolStripMenuItem,
             this.injectManagedDllToolStripMenuItem,
             this.toolStripSeparator1,
             this.toolStripMenuItem1,
@@ -201,6 +204,21 @@ namespace Mega_Dumper
             this.advancedInfoToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
             this.advancedInfoToolStripMenuItem.Text = "Advanced Info";
             // 
+            // siglusToolStripMenuItem
+            //
+            this.siglusToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.dumpScenePckToolStripMenuItem});
+            this.siglusToolStripMenuItem.Name = "siglusToolStripMenuItem";
+            this.siglusToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+            this.siglusToolStripMenuItem.Text = "Siglus";
+            //
+            // dumpScenePckToolStripMenuItem
+            //
+            this.dumpScenePckToolStripMenuItem.Name = "dumpScenePckToolStripMenuItem";
+            this.dumpScenePckToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.dumpScenePckToolStripMenuItem.Text = "Dump Scene.pck";
+            this.dumpScenePckToolStripMenuItem.Click += new System.EventHandler(this.DumpScenePckToolStripMenuItemClick);
+            //
             // virtualMemoryToolStripMenuItem
             // 
             this.virtualMemoryToolStripMenuItem.Name = "virtualMemoryToolStripMenuItem";
@@ -520,6 +538,8 @@ namespace Mega_Dumper
             this.PerformLayout();
 
 		}
+        private System.Windows.Forms.ToolStripMenuItem siglusToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem dumpScenePckToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem injectManagedDllToolStripMenuItem;
 		private System.Windows.Forms.ColumnHeader status;
 		private System.Windows.Forms.ToolStripMenuItem fileDirectoriesListToolStripMenuItem;

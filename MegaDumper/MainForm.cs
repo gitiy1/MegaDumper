@@ -3118,5 +3118,22 @@ namespace Mega_Dumper
                 maninject.Show();
             }
         }
+
+        private void DumpScenePckToolStripMenuItemClick(object sender, EventArgs e)
+        {
+            if (lvprocesslist.SelectedIndices.Count == 0)
+                return;
+
+            int selectedIndex = lvprocesslist.SelectedIndices[0];
+            uint processId = Convert.ToUInt32(lvprocesslist.Items[selectedIndex].SubItems[1].Text);
+
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            fbd.Description = "Select output directory for Scene.pck";
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                string result = SiglusUtils.DumpScenePck(processId, fbd.SelectedPath);
+                MessageBox.Show(result, "Dump Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
     }
 }
