@@ -22,10 +22,10 @@ jobs:
     - name: 检出代码 (Checkout code)
       uses: actions/checkout@v4
 
-    - name: 安装 .NET 8 SDK (Setup .NET)
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+    # - name: 安装 .NET 8 SDK (Setup .NET)
+    #   uses: actions/setup-dotnet@v4
+    #   with:
+    #     dotnet-version: '8.0.x'
 
     - name: 还原依赖 (Restore dependencies)
       # 这里假设你的 csproj 文件在 MegaDumper 目录下。如果有 sln 文件，也可以直接 restore sln
@@ -41,5 +41,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: MegaDumper-SingleFile-${{ matrix.platform }}-${{ matrix.configuration }}
-        # publish 的输出路径和 build 不同，它在对应的 publish 文件夹下
-        path: MegaDumper/bin/${{ matrix.platform }}/${{ matrix.configuration }}/net8.0-windows/win-${{ matrix.platform }}/publish/
+        # 【修改这里】去掉了 bin/ 后面的 ${{ matrix.platform }}/
+        path: MegaDumper/bin/${{ matrix.configuration }}/net8.0-windows/win-${{ matrix.platform }}/publish/
