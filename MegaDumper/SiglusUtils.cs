@@ -100,8 +100,14 @@ namespace Mega_Dumper
                             PACK_HDR hdr = ByteArrayToStructure<PACK_HDR>(buffer);
                             if (IsValidHeader(hdr, (long)regionSize))
                             {
-                                // Assume Scene.pck takes the whole mapped region
-                                long estimatedSize = (long)regionSize;
+                                // Calculate actual file size by reading the index table
+                                long estimatedSize = CalculatePckSize(hProcess, currentAddress, hdr);
+
+                                // Fallback: if estimated size is suspiciously small (or failed to calc), use region size
+                                // But if regionSize is also small (user reported 16KB), rely on calculated if available.
+                                // If calculation fails, it returns a small value (header based).
+                                // So we take the MAX of regionSize and calculatedSize to be safe.
+                                if (estimatedSize < (long)regionSize) estimatedSize = (long)regionSize;
 
                                 string fileName = Path.Combine(outputDir, "Scene.pck");
                                 if (File.Exists(fileName))
@@ -114,7 +120,10 @@ namespace Mega_Dumper
                         }
                     }
 
-                    currentAddress = (ulong)mbi.BaseAddress.ToInt64() + (ulong)mbi.RegionSize.ToInt64();
+                    // To avoid infinite loops or overflow
+                    ulong nextAddress = (ulong)mbi.BaseAddress.ToInt64() + (ulong)mbi.RegionSize.ToInt64();
+                    if (nextAddress <= currentAddress) break;
+                    currentAddress = nextAddress;
                 }
             }
             catch (Exception ex)
@@ -127,6 +136,52 @@ namespace Mega_Dumper
             }
 
             return "Scene.pck header not found in memory.";
+        }
+
+        private static long CalculatePckSize(IntPtr hProcess, ulong baseAddress, PACK_HDR hdr)
+        {
+            // Start with the end of the data list base offset
+            long maxEnd = hdr.scn_data_list_ofs;
+
+            int count = hdr.scn_data_index_cnt;
+            if (count > 0 && count < 1000000) // Sanity check count
+            {
+                long listOffset = hdr.scn_data_index_list_ofs;
+                int itemSize = 8;
+                long totalListSize = (long)count * itemSize;
+
+                // Read the index list
+                byte[] listBuffer = new byte[totalListSize];
+                uint bytesRead = 0;
+
+                // We read from baseAddress + listOffset.
+                // Note: This read might cross page boundaries if the list is large.
+                // MainForm.ReadProcessMemory handles crossing boundaries if contiguous pages are readable.
+                if (MainForm.ReadProcessMemory(hProcess, baseAddress + (ulong)listOffset, listBuffer, (uint)totalListSize, ref bytesRead) && bytesRead == totalListSize)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        int offset = BitConverter.ToInt32(listBuffer, i * 8);
+                        int size = BitConverter.ToInt32(listBuffer, i * 8 + 4);
+                        if (offset >= 0 && size > 0)
+                        {
+                            long end = hdr.scn_data_list_ofs + offset + size;
+                            if (end > maxEnd) maxEnd = end;
+                        }
+                    }
+                }
+            }
+
+            // If original_source_header_size is present, add it.
+            // In the reference python code, original sources follow the scene data.
+            // We don't know the exact size of original source data without parsing/decrypting it,
+            // but we at least know there is a header.
+            if (hdr.original_source_header_size > 0)
+            {
+                maxEnd += hdr.original_source_header_size;
+            }
+
+            return maxEnd;
         }
 
         private static void DumpMemoryToFile(IntPtr hProcess, ulong address, ulong size, string fileName)
@@ -146,7 +201,19 @@ namespace Mega_Dumper
                         fs.Write(buffer, 0, (int)bytesRead);
                         current += bytesRead;
                         remaining -= bytesRead;
-                        if (bytesRead < toRead) break;
+
+                        // If we read less than requested but not 0, maybe we hit a boundary?
+                        // ReadProcessMemory returns FALSE if it fails, but bytesRead might be > 0.
+                        // We continue.
+                        if (bytesRead < toRead)
+                        {
+                            // If we hit an unreadable page, we might stop here or pad with zeros.
+                            // For a dump, stopping or padding is debateable.
+                            // If we assume size is correct, padding might be safer to preserve offsets.
+                            // But usually ReadProcessMemory fails completely if *any* part is unreadable.
+                            // Let's assume failure means end of reachable memory.
+                            break;
+                        }
                     }
                     else
                     {
