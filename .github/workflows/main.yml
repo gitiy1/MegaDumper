@@ -34,12 +34,20 @@ jobs:
     - name: 编译项目 (Build)
       run: dotnet build MegaDumper/MegaDumper.csproj --configuration ${{ matrix.configuration }} -p:Platform=${{ matrix.platform }} --no-restore
 
-    - name: 发布单文件独立程序 (Publish Single File)
-      run: dotnet publish MegaDumper/MegaDumper.csproj -c ${{ matrix.configuration }} -r win-${{ matrix.platform }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+    - name: 发布单文件独立程序 (Publish Full/Self-Contained)
+      run: dotnet publish MegaDumper/MegaDumper.csproj -c ${{ matrix.configuration }} -r win-${{ matrix.platform }} --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish_full
 
-    - name: 上传构建产物 (Upload build artifacts)
+    - name: 发布框架依赖精简版 (Publish Lite/Framework-Dependent)
+      run: dotnet publish MegaDumper/MegaDumper.csproj -c ${{ matrix.configuration }} -r win-${{ matrix.platform }} --self-contained false -o ./publish_lite
+
+    - name: 上传完整版 (Upload Full Artifact)
       uses: actions/upload-artifact@v4
       with:
-        name: MegaDumper-SingleFile-${{ matrix.platform }}-${{ matrix.configuration }}
-        # 【修改这里】去掉了 bin/ 后面的 ${{ matrix.platform }}/
-        path: MegaDumper/bin/${{ matrix.configuration }}/net8.0-windows/win-${{ matrix.platform }}/publish/
+        name: MegaDumper-Full-win-${{ matrix.platform }}
+        path: ./publish_full/
+
+    - name: 上传精简版 (Upload Lite Artifact)
+      uses: actions/upload-artifact@v4
+      with:
+        name: MegaDumper-Lite-win-${{ matrix.platform }}
+        path: ./publish_lite/
